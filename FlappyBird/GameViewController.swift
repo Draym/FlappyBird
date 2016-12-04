@@ -1,0 +1,89 @@
+//
+//  GameViewController.swift
+//  FlappyBird
+//
+//  Created by Nate Murray on 6/2/14.
+//  Copyright (c) 2014 Fullstack.io. All rights reserved.
+//
+
+import UIKit
+import SpriteKit
+
+extension SKNode {
+    class func unarchiveFromFile(_ file : String) -> SKNode? {
+        
+        let path = Bundle.main.path(forResource: file, ofType: "sks")
+        
+        let sceneData: Data?
+        do {
+            sceneData = try Data(contentsOf: URL(fileURLWithPath: path!), options: .mappedIfSafe)
+        } catch _ {
+            sceneData = nil
+        }
+        let archiver = NSKeyedUnarchiver(forReadingWith: sceneData!)
+        
+        archiver.setClass(self.classForKeyedUnarchiver(), forClassName: "SKScene")
+        let scene = archiver.decodeObject(forKey: NSKeyedArchiveRootObjectKey) as! GameScene
+        archiver.finishDecoding()
+        return scene
+    }
+}
+
+class GameViewController: UIViewController {
+
+    @IBOutlet weak var beforeGameView: UIView!
+    @IBOutlet weak var afterGameView: UIView!
+    @IBOutlet weak var tapTapView: UIImageView!
+    @IBOutlet weak var playAgainButton: UIButton!
+    
+    var scene:GameScene? = nil;
+    
+    @IBAction func playAgain(_ sender: Any) {
+        scene?.startScene()
+    }
+    
+    override func viewDidLoad() {
+        super.viewDidLoad()
+
+        tapTapView.animationImages = [UIImage(named: "TapTap")!, UIImage(named: "TapTap2")!];
+        tapTapView.animationDuration = 0.5;
+        tapTapView.startAnimating()
+        
+        if let scene = GameScene.unarchiveFromFile("GameScene") as? GameScene {
+            // Configure the view.
+            let skView = self.view as! SKView
+            skView.showsFPS = true
+            skView.showsNodeCount = true
+            
+            /* Sprite Kit applies additional optimizations to improve rendering performance */
+            skView.ignoresSiblingOrder = true
+            
+            /* Set the scale mode to scale to fit the window */
+            scene.scaleMode = .aspectFill
+            
+            //save scene access
+            self.scene = scene
+            
+            scene.setUIViews(beforeGameView: beforeGameView, afterGameView: afterGameView);
+            skView.presentScene(scene)
+        }
+    }
+
+    override var shouldAutorotate : Bool {
+        return true
+    }
+
+    override var supportedInterfaceOrientations : UIInterfaceOrientationMask {
+        if UIDevice.current.userInterfaceIdiom == .phone {
+            return UIInterfaceOrientationMask.allButUpsideDown
+        } else {
+            return UIInterfaceOrientationMask.all
+        }
+    }
+
+    override func didReceiveMemoryWarning() {
+        super.didReceiveMemoryWarning()
+        // Release any cached data, images, etc that aren't in use.
+    }
+    
+}
